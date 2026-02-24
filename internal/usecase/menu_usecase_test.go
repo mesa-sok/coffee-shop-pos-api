@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"coffee-shop-pos/internal/domain"
@@ -127,6 +128,43 @@ func TestUpdate(t *testing.T) {
 	err := u.Update(context.Background(), item)
 
 	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdate_NotFound(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+	id := uuid.New()
+	item := &domain.MenuItem{
+		ID:    id,
+		Name:  "Mocha",
+		Price: decimal.NewFromFloat(4.00),
+	}
+
+	repo.On("GetByID", mock.Anything, id).Return(nil, nil)
+
+	err := u.Update(context.Background(), item)
+
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdate_DBError(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+	id := uuid.New()
+	item := &domain.MenuItem{
+		ID:    id,
+		Name:  "Mocha",
+		Price: decimal.NewFromFloat(4.00),
+	}
+
+	dbErr := errors.New("db error")
+	repo.On("GetByID", mock.Anything, id).Return(nil, dbErr)
+
+	err := u.Update(context.Background(), item)
+
+	assert.ErrorIs(t, err, dbErr)
 	repo.AssertExpectations(t)
 }
 

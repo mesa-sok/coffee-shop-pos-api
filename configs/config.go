@@ -13,6 +13,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	DBSSLMode  string
 	ServerPort string
 }
 
@@ -28,6 +29,7 @@ func LoadConfig() *Config {
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "postgres"),
 		DBName:     getEnv("DB_NAME", "coffee_shop"),
+		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
 	}
 }

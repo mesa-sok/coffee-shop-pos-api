@@ -39,7 +39,7 @@ This project follows **Clean Architecture** to ensure separation of concerns, te
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.23+
 - Docker & Docker Compose
 
 ### Installation

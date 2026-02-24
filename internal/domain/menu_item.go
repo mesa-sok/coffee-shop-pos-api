@@ -31,8 +31,6 @@ type MenuItemRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-var ErrNotFound = errors.New("item not found")
-
 type MenuItemUsecase interface {
 	Create(ctx context.Context, item *MenuItem) error
 	GetByID(ctx context.Context, id uuid.UUID) (*MenuItem, error)

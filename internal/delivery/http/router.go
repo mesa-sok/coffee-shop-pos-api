@@ -7,6 +7,7 @@ import (
 )
 
 func NewRouter(r *gin.Engine, h *handler.MenuHandler) {
+	r.Use(middleware.CORS())
 	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.BodySizeLimit())
 

@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"coffee-shop-pos/internal/domain"
 	"github.com/google/uuid"
@@ -30,7 +29,7 @@ func (r *menuRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Men
 	query := `SELECT * FROM menu_items WHERE id = $1`
 	err := r.db.GetContext(ctx, &item, query, id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
@@ -60,8 +59,9 @@ func (r *menuRepository) Update(ctx context.Context, item *domain.MenuItem) erro
 	if err != nil {
 		return err
 	}
+
 	if rowsAffected == 0 {
-		return domain.ErrNotFound
+		return sql.ErrNoRows
 	}
 
 	return nil
@@ -78,8 +78,9 @@ func (r *menuRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+
 	if rowsAffected == 0 {
-		return domain.ErrNotFound
+		return sql.ErrNoRows
 	}
 
 	return nil

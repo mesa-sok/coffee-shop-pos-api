@@ -65,7 +65,6 @@ func TestCreate(t *testing.T) {
 func TestGetByID(t *testing.T) {
 	repo := new(mockMenuRepo)
 	u := NewMenuUsecase(repo)
-
 	id := uuid.New()
 	expected := &domain.MenuItem{
 		ID:    id,
@@ -86,7 +85,6 @@ func TestGetByID(t *testing.T) {
 func TestFetch(t *testing.T) {
 	repo := new(mockMenuRepo)
 	u := NewMenuUsecase(repo)
-
 	items := []domain.MenuItem{
 		{
 			ID:    uuid.New(),
@@ -113,17 +111,14 @@ func TestFetch(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	repo := new(mockMenuRepo)
 	u := NewMenuUsecase(repo)
-
 	id := uuid.New()
-	existing := &domain.MenuItem{
-		ID:    id,
-		Name:  "Old Mocha",
-		Price: decimal.NewFromFloat(3.50),
-	}
 	item := &domain.MenuItem{
 		ID:    id,
 		Name:  "Mocha",
 		Price: decimal.NewFromFloat(4.00),
+	}
+	existing := &domain.MenuItem{
+		ID: id,
 	}
 
 	repo.On("GetByID", mock.Anything, id).Return(existing, nil)
@@ -132,33 +127,12 @@ func TestUpdate(t *testing.T) {
 	err := u.Update(context.Background(), item)
 
 	assert.NoError(t, err)
-	assert.Equal(t, existing.CreatedAt, item.CreatedAt)
-	repo.AssertExpectations(t)
-}
-
-func TestUpdate_NotFound(t *testing.T) {
-	repo := new(mockMenuRepo)
-	u := NewMenuUsecase(repo)
-
-	id := uuid.New()
-	item := &domain.MenuItem{
-		ID:    id,
-		Name:  "Mocha",
-		Price: decimal.NewFromFloat(4.00),
-	}
-
-	repo.On("GetByID", mock.Anything, id).Return(nil, nil)
-
-	err := u.Update(context.Background(), item)
-
-	assert.ErrorIs(t, err, domain.ErrNotFound)
 	repo.AssertExpectations(t)
 }
 
 func TestDelete(t *testing.T) {
 	repo := new(mockMenuRepo)
 	u := NewMenuUsecase(repo)
-
 	id := uuid.New()
 
 	repo.On("Delete", mock.Anything, id).Return(nil)

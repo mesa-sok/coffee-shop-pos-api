@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"coffee-shop-pos/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type MenuHandler struct {
@@ -18,6 +20,16 @@ func NewMenuHandler(u domain.MenuItemUsecase) *MenuHandler {
 	}
 }
 
+func validateMenuItem(item *domain.MenuItem) string {
+	if item.Name == "" {
+		return "name is required"
+	}
+	if item.Price.LessThanOrEqual(decimal.Zero) {
+		return "price must be greater than zero"
+	}
+	return ""
+}
+
 func (h *MenuHandler) Create(c *gin.Context) {
 	var item domain.MenuItem
 	if err := c.ShouldBindJSON(&item); err != nil {
@@ -25,8 +37,13 @@ func (h *MenuHandler) Create(c *gin.Context) {
 		return
 	}
 
+	if msg := validateMenuItem(&item); msg != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+
 	if err := h.MenuUsecase.Create(c.Request.Context(), &item); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create menu item"})
 		return
 	}
 
@@ -43,7 +60,7 @@ func (h *MenuHandler) GetByID(c *gin.Context) {
 
 	item, err := h.MenuUsecase.GetByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch menu item"})
 		return
 	}
 
@@ -58,7 +75,7 @@ func (h *MenuHandler) GetByID(c *gin.Context) {
 func (h *MenuHandler) Fetch(c *gin.Context) {
 	items, err := h.MenuUsecase.Fetch(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch menu items"})
 		return
 	}
 
@@ -79,9 +96,18 @@ func (h *MenuHandler) Update(c *gin.Context) {
 		return
 	}
 
+	if msg := validateMenuItem(&item); msg != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
+		return
+	}
+
 	item.ID = id
 	if err := h.MenuUsecase.Update(c.Request.Context(), &item); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, domain.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "menu item not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update menu item"})
 		return
 	}
 
@@ -97,9 +123,13 @@ func (h *MenuHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.MenuUsecase.Delete(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, domain.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "menu item not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete menu item"})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	c.Status(http.StatusNoContent)
 }

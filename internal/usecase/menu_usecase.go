@@ -34,6 +34,15 @@ func (u *menuUsecase) Fetch(ctx context.Context) ([]domain.MenuItem, error) {
 }
 
 func (u *menuUsecase) Update(ctx context.Context, item *domain.MenuItem) error {
+	existing, err := u.menuRepo.GetByID(ctx, item.ID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return domain.ErrNotFound
+	}
+
+	item.CreatedAt = existing.CreatedAt
 	item.UpdatedAt = time.Now()
 	return u.menuRepo.Update(ctx, item)
 }

@@ -6,6 +6,7 @@ import (
 
 	"coffee-shop-pos/internal/domain"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -49,7 +50,7 @@ func TestCreate(t *testing.T) {
 
 	item := &domain.MenuItem{
 		Name:  "Test Coffee",
-		Price: 3.50,
+		Price: decimal.NewFromFloat(3.50),
 	}
 
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.MenuItem")).Return(nil)
@@ -58,5 +59,112 @@ func TestCreate(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, item.ID)
+	repo.AssertExpectations(t)
+}
+
+func TestGetByID(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+
+	id := uuid.New()
+	expected := &domain.MenuItem{
+		ID:    id,
+		Name:  "Latte",
+		Price: decimal.NewFromFloat(4.25),
+	}
+
+	repo.On("GetByID", mock.Anything, id).Return(expected, nil)
+
+	result, err := u.GetByID(context.Background(), id)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, expected, result)
+	repo.AssertExpectations(t)
+}
+
+func TestFetch(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+
+	items := []domain.MenuItem{
+		{
+			ID:    uuid.New(),
+			Name:  "Espresso",
+			Price: decimal.NewFromFloat(2.50),
+		},
+		{
+			ID:    uuid.New(),
+			Name:  "Cappuccino",
+			Price: decimal.NewFromFloat(3.75),
+		},
+	}
+
+	repo.On("Fetch", mock.Anything).Return(items, nil)
+
+	result, err := u.Fetch(context.Background())
+
+	assert.NoError(t, err)
+	assert.Len(t, result, len(items))
+	assert.Equal(t, items, result)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdate(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+
+	id := uuid.New()
+	existing := &domain.MenuItem{
+		ID:    id,
+		Name:  "Old Mocha",
+		Price: decimal.NewFromFloat(3.50),
+	}
+	item := &domain.MenuItem{
+		ID:    id,
+		Name:  "Mocha",
+		Price: decimal.NewFromFloat(4.00),
+	}
+
+	repo.On("GetByID", mock.Anything, id).Return(existing, nil)
+	repo.On("Update", mock.Anything, item).Return(nil)
+
+	err := u.Update(context.Background(), item)
+
+	assert.NoError(t, err)
+	assert.Equal(t, existing.CreatedAt, item.CreatedAt)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdate_NotFound(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+
+	id := uuid.New()
+	item := &domain.MenuItem{
+		ID:    id,
+		Name:  "Mocha",
+		Price: decimal.NewFromFloat(4.00),
+	}
+
+	repo.On("GetByID", mock.Anything, id).Return(nil, nil)
+
+	err := u.Update(context.Background(), item)
+
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+	repo.AssertExpectations(t)
+}
+
+func TestDelete(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+
+	id := uuid.New()
+
+	repo.On("Delete", mock.Anything, id).Return(nil)
+
+	err := u.Delete(context.Background(), id)
+
+	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 }

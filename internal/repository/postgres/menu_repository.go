@@ -51,12 +51,36 @@ func (r *menuRepository) Fetch(ctx context.Context) ([]domain.MenuItem, error) {
 func (r *menuRepository) Update(ctx context.Context, item *domain.MenuItem) error {
 	query := `UPDATE menu_items SET name=:name, description=:description, price=:price, category=:category,
               is_available=:is_available, updated_at=:updated_at WHERE id=:id`
-	_, err := r.db.NamedExecContext(ctx, query, item)
-	return err
+	result, err := r.db.NamedExecContext(ctx, query, item)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
 }
 
 func (r *menuRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM menu_items WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, id)
-	return err
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
 }

@@ -8,6 +8,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.11.2
+	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 )
 

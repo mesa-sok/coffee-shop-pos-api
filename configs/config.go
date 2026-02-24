@@ -15,7 +15,6 @@ type Config struct {
 	DBName     string
 	DBSSLMode  string
 	ServerPort string
-	GinMode    string
 }
 
 func LoadConfig() *Config {
@@ -32,7 +31,6 @@ func LoadConfig() *Config {
 		DBName:     getEnv("DB_NAME", "coffee_shop"),
 		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
-		GinMode:    getEnv("GIN_MODE", "release"),
 	}
 }
 

@@ -9,9 +9,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// ErrNotFound is returned when a requested resource does not exist.
-var ErrNotFound = errors.New("not found")
-
 type MenuItem struct {
 	ID          uuid.UUID       `json:"id" db:"id" binding:"omitempty"`
 	Name        string          `json:"name" db:"name" binding:"required"`

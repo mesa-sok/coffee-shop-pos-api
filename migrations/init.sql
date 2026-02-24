@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS menu_items (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    price DECIMAL(10, 2) NOT NULL CHECK (price > 0),
+    price DECIMAL(10, 2) NOT NULL,
     category VARCHAR(100),
     is_available BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

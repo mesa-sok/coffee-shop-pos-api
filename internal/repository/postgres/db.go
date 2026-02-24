@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"coffee-shop-pos/configs"
 	"github.com/jmoiron/sqlx"
@@ -22,10 +21,6 @@ func NewConnection(cfg *configs.Config) (*sqlx.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
 
 	log.Println("Connected to PostgreSQL successfully")
 	return db, nil

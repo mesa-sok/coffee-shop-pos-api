@@ -7,7 +7,6 @@ import (
 	"coffee-shop-pos/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 )
 
 type MenuHandler struct {
@@ -20,25 +19,10 @@ func NewMenuHandler(u domain.MenuItemUsecase) *MenuHandler {
 	}
 }
 
-func validateMenuItem(item *domain.MenuItem) string {
-	if item.Name == "" {
-		return "name is required"
-	}
-	if item.Price.LessThanOrEqual(decimal.Zero) {
-		return "price must be greater than zero"
-	}
-	return ""
-}
-
 func (h *MenuHandler) Create(c *gin.Context) {
 	var item domain.MenuItem
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	if msg := validateMenuItem(&item); msg != "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 
@@ -93,11 +77,6 @@ func (h *MenuHandler) Update(c *gin.Context) {
 	var item domain.MenuItem
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	if msg := validateMenuItem(&item); msg != "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": msg})
 		return
 	}
 

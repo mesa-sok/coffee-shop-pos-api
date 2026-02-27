@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(r *gin.Engine, h *handler.MenuHandler) {
+func NewRouter(r *gin.Engine, menuHandler *handler.MenuHandler, orderHandler *handler.OrderHandler) {
 	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.BodySizeLimit())
 
@@ -14,11 +14,19 @@ func NewRouter(r *gin.Engine, h *handler.MenuHandler) {
 	{
 		menu := api.Group("/menu")
 		{
-			menu.POST("", h.Create)
-			menu.GET("", h.Fetch)
-			menu.GET("/:id", h.GetByID)
-			menu.PUT("/:id", h.Update)
-			menu.DELETE("/:id", h.Delete)
+			menu.POST("", menuHandler.Create)
+			menu.GET("", menuHandler.Fetch)
+			menu.GET("/:id", menuHandler.GetByID)
+			menu.PUT("/:id", menuHandler.Update)
+			menu.DELETE("/:id", menuHandler.Delete)
+		}
+
+		orders := api.Group("/orders")
+		{
+			orders.POST("", orderHandler.Create)
+			orders.GET("", orderHandler.List)
+			orders.GET("/:id", orderHandler.GetByID)
+			orders.PATCH("/:id/status", orderHandler.UpdateStatus)
 		}
 	}
 }

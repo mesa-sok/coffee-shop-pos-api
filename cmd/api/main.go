@@ -35,18 +35,21 @@ func main() {
 
 	// Initialize Repository
 	menuRepo := postgres.NewMenuItemRepository(db)
+	orderRepo := postgres.NewOrderRepository(db)
 
 	// Initialize Usecase
 	menuUsecase := usecase.NewMenuUsecase(menuRepo)
+	orderUsecase := usecase.NewOrderUsecase(orderRepo, menuRepo)
 
 	// Initialize Handler
 	menuHandler := handler.NewMenuHandler(menuUsecase)
+	orderHandler := handler.NewOrderHandler(orderUsecase)
 
 	// Initialize Gin Engine
 	r := gin.Default()
 
 	// Setup Router (also registers global middleware)
-	httpdelivery.NewRouter(r, menuHandler)
+	httpdelivery.NewRouter(r, menuHandler, orderHandler)
 
 	// Use a custom http.Server with timeouts to protect against slow-loris
 	// and other slow-connection attacks.

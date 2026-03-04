@@ -29,8 +29,8 @@ func (u *menuUsecase) GetByID(ctx context.Context, id uuid.UUID) (*domain.MenuIt
 	return u.menuRepo.GetByID(ctx, id)
 }
 
-func (u *menuUsecase) Fetch(ctx context.Context) ([]domain.MenuItem, error) {
-	return u.menuRepo.Fetch(ctx)
+func (u *menuUsecase) Fetch(ctx context.Context, filter domain.MenuFilter) (*domain.MenuListResult, error) {
+	return u.menuRepo.Fetch(ctx, filter)
 }
 
 func (u *menuUsecase) Update(ctx context.Context, item *domain.MenuItem) error {

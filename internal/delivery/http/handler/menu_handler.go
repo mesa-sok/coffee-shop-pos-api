@@ -3,12 +3,34 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"coffee-shop-pos/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
+
+const (
+	defaultMenuLimit = 20
+	maxMenuLimit     = 100
+)
+
+type fetchMenuRequest struct {
+	Category    string
+	IsAvailable *bool
+	Search      string
+	Limit       int
+	Offset      int
+}
+
+type fetchMenuResponse struct {
+	Data   []domain.MenuItem `json:"data"`
+	Limit  int               `json:"limit"`
+	Offset int               `json:"offset"`
+	Total  int64             `json:"total"`
+}
 
 type MenuHandler struct {
 	MenuUsecase domain.MenuItemUsecase
@@ -28,6 +50,62 @@ func validateMenuItem(item *domain.MenuItem) string {
 		return "price must be greater than zero"
 	}
 	return ""
+}
+
+func (h *MenuHandler) parseFetchMenuRequest(c *gin.Context) (*fetchMenuRequest, string) {
+	request := &fetchMenuRequest{
+		Category: strings.TrimSpace(c.Query("category")),
+		Search:   strings.TrimSpace(c.Query("search")),
+		Limit:    defaultMenuLimit,
+		Offset:   0,
+	}
+
+	isAvailableStr := strings.TrimSpace(c.Query("is_available"))
+	if isAvailableStr != "" {
+		isAvailable, err := strconv.ParseBool(isAvailableStr)
+		if err != nil {
+			return nil, "is_available must be a boolean"
+		}
+		request.IsAvailable = &isAvailable
+	}
+
+	pageSizeStr := strings.TrimSpace(c.Query("page_size"))
+	limitStr := strings.TrimSpace(c.Query("limit"))
+	if pageSizeStr != "" {
+		pageSize, err := strconv.Atoi(pageSizeStr)
+		if err != nil || pageSize <= 0 {
+			return nil, "page_size must be a positive integer"
+		}
+		request.Limit = pageSize
+	} else if limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit <= 0 {
+			return nil, "limit must be a positive integer"
+		}
+		request.Limit = limit
+	}
+
+	if request.Limit > maxMenuLimit {
+		request.Limit = maxMenuLimit
+	}
+
+	pageStr := strings.TrimSpace(c.Query("page"))
+	offsetStr := strings.TrimSpace(c.Query("offset"))
+	if pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page <= 0 {
+			return nil, "page must be a positive integer"
+		}
+		request.Offset = (page - 1) * request.Limit
+	} else if offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil || offset < 0 {
+			return nil, "offset must be a non-negative integer"
+		}
+		request.Offset = offset
+	}
+
+	return request, ""
 }
 
 func (h *MenuHandler) Create(c *gin.Context) {
@@ -73,13 +151,32 @@ func (h *MenuHandler) GetByID(c *gin.Context) {
 }
 
 func (h *MenuHandler) Fetch(c *gin.Context) {
-	items, err := h.MenuUsecase.Fetch(c.Request.Context())
+	request, validationErr := h.parseFetchMenuRequest(c)
+	if validationErr != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": validationErr})
+		return
+	}
+
+	filter := domain.MenuFilter{
+		Category:    request.Category,
+		IsAvailable: request.IsAvailable,
+		Search:      request.Search,
+		Limit:       request.Limit,
+		Offset:      request.Offset,
+	}
+
+	result, err := h.MenuUsecase.Fetch(c.Request.Context(), filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch menu items"})
 		return
 	}
 
-	c.JSON(http.StatusOK, items)
+	c.JSON(http.StatusOK, fetchMenuResponse{
+		Data:   result.Items,
+		Limit:  filter.Limit,
+		Offset: filter.Offset,
+		Total:  result.Total,
+	})
 }
 
 func (h *MenuHandler) Update(c *gin.Context) {

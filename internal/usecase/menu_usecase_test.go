@@ -30,9 +30,12 @@ func (m *mockMenuRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.MenuI
 	return args.Get(0).(*domain.MenuItem), args.Error(1)
 }
 
-func (m *mockMenuRepo) Fetch(ctx context.Context) ([]domain.MenuItem, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]domain.MenuItem), args.Error(1)
+func (m *mockMenuRepo) Fetch(ctx context.Context, filter domain.MenuFilter) (*domain.MenuListResult, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.MenuListResult), args.Error(1)
 }
 
 func (m *mockMenuRepo) Update(ctx context.Context, item *domain.MenuItem) error {
@@ -86,6 +89,7 @@ func TestGetByID(t *testing.T) {
 func TestFetch(t *testing.T) {
 	repo := new(mockMenuRepo)
 	u := NewMenuUsecase(repo)
+	filter := domain.MenuFilter{Category: "Coffee", Limit: 10, Offset: 0}
 	items := []domain.MenuItem{
 		{
 			ID:    uuid.New(),
@@ -98,14 +102,29 @@ func TestFetch(t *testing.T) {
 			Price: decimal.NewFromFloat(3.75),
 		},
 	}
+	resultSet := &domain.MenuListResult{Items: items, Total: 2}
 
-	repo.On("Fetch", mock.Anything).Return(items, nil)
+	repo.On("Fetch", mock.Anything, filter).Return(resultSet, nil)
 
-	result, err := u.Fetch(context.Background())
+	result, err := u.Fetch(context.Background(), filter)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, len(items))
-	assert.Equal(t, items, result)
+	assert.Equal(t, resultSet, result)
+	repo.AssertExpectations(t)
+}
+
+func TestFetch_Error(t *testing.T) {
+	repo := new(mockMenuRepo)
+	u := NewMenuUsecase(repo)
+	filter := domain.MenuFilter{Limit: 10, Offset: 0}
+	repoErr := errors.New("fetch error")
+
+	repo.On("Fetch", mock.Anything, filter).Return(nil, repoErr)
+
+	result, err := u.Fetch(context.Background(), filter)
+
+	assert.Nil(t, result)
+	assert.ErrorIs(t, err, repoErr)
 	repo.AssertExpectations(t)
 }
 

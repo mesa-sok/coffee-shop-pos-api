@@ -23,10 +23,23 @@ type MenuItem struct {
 	UpdatedAt   time.Time       `json:"updated_at" db:"updated_at"`
 }
 
+type MenuFilter struct {
+	Category    string
+	IsAvailable *bool
+	Search      string
+	Limit       int
+	Offset      int
+}
+
+type MenuListResult struct {
+	Items []MenuItem
+	Total int64
+}
+
 type MenuItemRepository interface {
 	Create(ctx context.Context, item *MenuItem) error
 	GetByID(ctx context.Context, id uuid.UUID) (*MenuItem, error)
-	Fetch(ctx context.Context) ([]MenuItem, error)
+	Fetch(ctx context.Context, filter MenuFilter) (*MenuListResult, error)
 	Update(ctx context.Context, item *MenuItem) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -34,7 +47,7 @@ type MenuItemRepository interface {
 type MenuItemUsecase interface {
 	Create(ctx context.Context, item *MenuItem) error
 	GetByID(ctx context.Context, id uuid.UUID) (*MenuItem, error)
-	Fetch(ctx context.Context) ([]MenuItem, error)
+	Fetch(ctx context.Context, filter MenuFilter) (*MenuListResult, error)
 	Update(ctx context.Context, item *MenuItem) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

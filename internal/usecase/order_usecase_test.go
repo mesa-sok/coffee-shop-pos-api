@@ -45,7 +45,9 @@ func (m *mockMenuRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain
 	}
 	return args.Get(0).(*domain.MenuItem), args.Error(1)
 }
-func (m *mockMenuRepository) Fetch(ctx context.Context) ([]domain.MenuItem, error)    { return nil, nil }
+func (m *mockMenuRepository) Fetch(ctx context.Context, filter domain.MenuFilter) (*domain.MenuListResult, error) {
+	return nil, nil
+}
 func (m *mockMenuRepository) Update(ctx context.Context, item *domain.MenuItem) error { return nil }
 func (m *mockMenuRepository) Delete(ctx context.Context, id uuid.UUID) error          { return nil }
 
